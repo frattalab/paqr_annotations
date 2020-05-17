@@ -4,7 +4,7 @@
 '''
 Script to get non-overlapping genes with at least two overlapping polyA sites
 Takes a GENCODE GTF/GFF3 file as input
-Outputs a GTF file only containing
+Outputs a GTF file containing only transcript_ids with at least two overlapping polyA sites in last exon
 '''
 
 import sys
@@ -57,7 +57,7 @@ def get_last_exons(ranges_obj):
     return pyr.PyRanges(df)
 
 
-def get_multi_polya_genes(gtf_path=None, subset_list=None, polya_bed_path=None):
+def get_multi_polya_transcripts(gtf_path=None, subset_list=None, polya_bed_path=None):
     gtf_df = pyr.readers.read_gtf(f=gtf_path)
     # print(gtf_df.columns)
     gtf_df = gtf_df[gtf_df.gene_id.isin(subset_list)]
@@ -67,9 +67,10 @@ def get_multi_polya_genes(gtf_path=None, subset_list=None, polya_bed_path=None):
     polya_bed['Chromosome'] = 'chr' + polya_bed['Chromosome'].astype(str)
 
     polya_bed = pyr.PyRanges(polya_bed)
-    print(polya_bed)
+    # print(polya_bed)
     gtf_last_exons = get_last_exons(gtf_df)
-    print(gtf_last_exons)
+    # print(gtf_last_exons)
+
     # 4. count_overlaps with BED file od polyA_sites
     gtf_last_exons = gtf_last_exons.count_overlaps(
         polya_bed, strandedness="same", keep_nonoverlapping=False)
@@ -79,9 +80,20 @@ def get_multi_polya_genes(gtf_path=None, subset_list=None, polya_bed_path=None):
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
     trs = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
     # print(trs)
-    tr_list = set(trs.transcript_id.to_list())
+    tr_list = list(set(trs.transcript_id.to_list()))
 
     return tr_list
 
 
-print(get_multi_polya_genes(gtf_path=gtf, subset_list=non_overlapping_genes, polya_bed_path=polya_clusters))
+multi_overlap_transcripts = get_multi_polya_genes(
+    gtf_path=gtf, subset_list=non_overlapping_genes, polya_bed_path=polya_clusters)
+
+print("number of transcripts with multiple overlapping polyA_sites is %s" %
+      (len(multi_overlap_transcripts)))
+
+
+def write_overlapping_gtf(gtf_path=gtf, subset_list=None):
+    '''
+    Subsets gtf for transcripts containing at least two overlapping polyA_sites
+    write to gtf
+    '''
