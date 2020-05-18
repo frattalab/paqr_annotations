@@ -69,23 +69,35 @@ polya_tr_df = join_by_intersect(pyranges1=polya_bed, pyranges2=tr_gtf)
 # print(polya_tr_df.columns)
 
 
-def add_paqr_name_formatting(pyranges=None, col_name='paqr_name'):
+def add_paqr_name(pyranges=None, col_name='paqr_name'):
     '''
     Add a column to pyranges consisting of
     <chr>:<strand>:<coord>:<cluster_annotation>
     '''
     pyranges = pyranges.as_df()
 
-    def f(x): return x['Chromosome']+":" + x['Strand'] + \
-        ":" + x['Name'].split(':')[1] + ":" + x['BlockCount']
+    def f(x): return ':'.join([x['Chromosome'], x['Strand'],
+                               x['Name'].split(':')[1], x['BlockCount']])
     pyranges[col_name] = pyranges.apply(f, axis=1)
-
-    # pyranges[col_name] = pyranges['Chromosome'].astype(str)+":" + pyranges['Strand'].astype(
-    #    str) + ":" + split_by_colon(str=pyranges['Name'].astype(str), idx=1) + ":" + pyranges['BlockCount'].astype(str)
 
     return pyr.PyRanges(pyranges)
 
 
-polya_tr_df = add_paqr_name_formatting(pyranges=polya_tr_df)
-print(polya_tr_df[['paqr_name']])
+def add_paqr_long_name(pyranges=None, col_name='paqr_long_name'):
+    '''
+    Add a column to pyranges consisting of
+    <transcript_id>:<exon_number>:<n_exons_on_tr>:<exon_start>:<exon_end>
+    '''
+    pyranges = pyranges.as_df()
+
+    def f(x): return ':'.join([x['transcript_id'], x['exon_number'],
+                               x['exon_number'], str(x['Start_b']), str(x['Start_b'])])
+    pyranges[col_name] = pyranges.apply(f, axis=1)
+
+    return pyr.PyRanges(pyranges)
+
+
+polya_tr_df = add_paqr_name(pyranges=polya_tr_df)
+polya_tr_df = add_paqr_long_name(pyranges=polya_tr_df)
+print(polya_tr_df[['paqr_long_name']])
 print(polya_tr_df.columns)
