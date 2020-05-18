@@ -1,0 +1,25 @@
+#Config file for paqr annotations snakemake workflow
+
+#Select the 'Content':Comprehensive gene annotation, 'Regions:'	CHR file
+gencode_gtf: tests/gencode.chr1.vM25.annotation.gtf
+
+polyA_bed: atlas.clusters.2.0.GRCm38.96.bed
+
+output_dir: new_annotations/
+
+#Name of output BED12 transcripts file
+transcripts_name: full_transcripts.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
+
+#Name of output BED12 polyA clusters file
+clusters_name: clusters.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
+
+
+######----------------------------------------------
+#parameters/definitions for pipeline & intermediate files - NO NEED MESS WITH THESE
+######----------------------------------------------
+
+scripts_dir: scripts/
+
+output_subdir: intermediates/
+
+transcripts_gtf_name: non_overlapping.multi_polya.tr.gencode.mm10.vM25.annotation.gtf
