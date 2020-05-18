@@ -14,7 +14,8 @@ rule all:
 
 rule get_non_overlap_multi_polyA_genes:
     input:
-        gtf = config['gencode_gtf']
+        gtf = config['gencode_gtf'],
+        polyA_bed = config['polyA_bed']
 
     output:
         tr_gtf = os.path.join(config['output_dir'],
@@ -28,6 +29,7 @@ rule get_non_overlap_multi_polyA_genes:
         '''
         python {params.script} \
         {input.gtf} \
+        {input.polyA_bed} \
         {output.tr_gtf}
         '''
 
