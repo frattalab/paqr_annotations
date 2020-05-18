@@ -9,3 +9,4 @@ dependencies:
         - pyranges=0.0.77
         - ucsc-genepredtobed=377
         - ucsc-gtftogenepred=377
+        - snakemake-minimal=5.17.0
