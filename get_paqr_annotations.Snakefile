@@ -53,8 +53,8 @@ rule get_transcripts_BED12:
 
 rule get_clusters_BED:
     input:
-        tr_gtf = tr_gtf = os.path.join(config['output_dir'],
-                                       config['output_subdir'], config['transcripts_gtf_name'])
+        tr_gtf = os.path.join(config['output_dir'],
+                              config['output_subdir'], config['transcripts_gtf_name'])
     output:
         clusters_bed = os.path.join(config['output_dir'], config['clusters_name'])
 
