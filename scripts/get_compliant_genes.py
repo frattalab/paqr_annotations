@@ -101,7 +101,7 @@ if __name__ == '__main__':
     gtf_pyranges = pyr.readers.read_gtf(f=gtf)
 
     # list of gene ids that do not overlap with other genes on the same strand
-    non_overlapping_genes = get_non_overlapping_genes(gtf_path=gtf_pyranges)
+    non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
     print("number of genes that do not overlap on the same strand is %s" %
           (len(non_overlapping_genes)))
