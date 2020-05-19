@@ -99,5 +99,61 @@ def add_paqr_long_name(pyranges=None, col_name='paqr_long_name'):
 
 polya_tr_df = add_paqr_name(pyranges=polya_tr_df)
 polya_tr_df = add_paqr_long_name(pyranges=polya_tr_df)
-print(polya_tr_df[['paqr_long_name']])
-print(polya_tr_df.columns)
+# print(polya_tr_df[['paqr_long_name']])
+# print(polya_tr_df.columns)
+
+
+def add_n_along_exon(pyranges=None, col_name='n_along_exon'):
+    '''
+    Add a column containing the consecutive poly(A) site number along the exon
+    (1 = most proximal)
+    + strand - End coordinate = most 3' (smallest value = most proximal site in gene)
+    - strand - Start coordinate = most 3' (smallest value = most distal site in gene)
+    '''
+    df = pyranges.as_df()
+
+    def sort_sites_along_exon(x):
+        # first reset_index call removes the original index of the group (e.g. row 4005 in df)
+        # second reset_index call adds the sorted index as a column to the dataframe (the order along exon in each transcript)
+        if (x.Strand == '+').all():
+            return x.sort_values(by=['End']).reset_index(drop=True).reset_index()
+        elif (x.Strand == '-').all():
+            return x.sort_values(by=['Start'], ascending=False).reset_index(drop=True).reset_index()
+
+    # adds column called #index with consective order of sites along exon
+    # reset_index call removes the 'transcript_id' index from the dataframe (i.e. the grouping)
+    df = df.groupby('transcript_id').apply(sort_sites_along_exon).reset_index(drop=True)
+
+    # indexes are 0 based - add one so 1st site in exon has value 1 etc.
+    df['index'] = df['index'].add(1)
+
+    df = df.rename(columns={'index': col_name})
+
+    # .sort_values(by=['End']).cumcount()
+    # print(df.loc['ENSMUST00000000266.8', ['Start', 'Strand']
+    #             ])  # .reset_index(drop=True).reset_index())
+
+    return pyr.PyRanges(df)
+
+
+polya_tr_df = add_n_along_exon(pyranges=polya_tr_df)
+
+#print(polya_tr_df[['transcript_id', 'n_along_exon']].head(n=8))
+# print(polya_tr_df.columns)
+
+
+def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
+    '''
+    Add a column containing total number of polyA sites on given exon
+    '''
+    df = pyranges.as_df()
+
+    def get_n_sites(x):
+        return x.sort_values('n_along_exon', ascending=False).drop_duplicates(['transcript_id'])
+
+    df['total_n_on_exon'] = df.groupby('transcript_id')['n_along_exon'].max().reset_index()
+    return(df)
+
+
+test_df = get_total_n_on_exon(pyranges=polya_tr_df)
+print(test_df)
