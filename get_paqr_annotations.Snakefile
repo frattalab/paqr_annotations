@@ -47,7 +47,7 @@ rule get_transcripts_BED12:
 
     shell:
         '''
-        gtftoGenePred {input.tr_gtf} {params.tmp_genePred}
+        gtfToGenePred {input.tr_gtf} {params.tmp_genePred}
         genePredToBed {params.tmp_genePred} {output.tr_bed}
         '''
 
