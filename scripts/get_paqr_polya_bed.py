@@ -32,9 +32,9 @@ import sys
 from get_compliant_genes import get_last_exons
 
 
-tr_gtf_path = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-out = "/home/sam/paqr_annotations/tests/clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+#tr_gtf_path = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+#polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+#out = "/home/sam/paqr_annotations/tests/clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
 
 
 def tidy_chromosome_column(polya_bed_path=None):
@@ -49,13 +49,6 @@ def tidy_chromosome_column(polya_bed_path=None):
     return pyr.PyRanges(bed_df)
 
 
-polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
-# print(polya_bed)
-
-tr_gtf = pyr.read_gtf(f=tr_gtf_path)
-tr_gtf = get_last_exons(ranges_obj=tr_gtf)
-
-
 def join_by_intersect(pyranges1=None, pyranges2=None):
     '''
     Joins two given pyranges object, reporting only entries which have same strand overlap
@@ -63,11 +56,6 @@ def join_by_intersect(pyranges1=None, pyranges2=None):
     '''
     df = pyranges1.join(pyranges2, strandedness=None, how=None)
     return df
-
-
-polya_tr_df = join_by_intersect(pyranges1=polya_bed, pyranges2=tr_gtf)
-# print(polya_tr_df)
-# print(polya_tr_df.columns)
 
 
 def add_paqr_name(pyranges=None, col_name='paqr_name'):
@@ -96,12 +84,6 @@ def add_paqr_long_name(pyranges=None, col_name='paqr_long_name'):
     pyranges[col_name] = pyranges.apply(f, axis=1)
 
     return pyr.PyRanges(pyranges)
-
-
-polya_tr_df = add_paqr_name(pyranges=polya_tr_df)
-polya_tr_df = add_paqr_long_name(pyranges=polya_tr_df)
-# print(polya_tr_df[['paqr_long_name']])
-# print(polya_tr_df.columns)
 
 
 def add_n_along_exon(pyranges=None, col_name='n_along_exon'):
@@ -137,18 +119,12 @@ def add_n_along_exon(pyranges=None, col_name='n_along_exon'):
     return pyr.PyRanges(df)
 
 
-polya_tr_df = add_n_along_exon(pyranges=polya_tr_df)
-
-# print(polya_tr_df[['transcript_id', 'n_along_exon']].head(n=8))
-# print(polya_tr_df.columns)
-
-
 def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
     '''
     Add a column containing total number of polyA sites on given exon
     '''
     df = pyranges.as_df()
-    print("nrows: %s" % (len(df.index)))
+    #print("nrows: %s" % (len(df.index)))
 
     # Get maximum n_along_exon for each transcript
     # Returns df of transcript_id | n_along_exon
@@ -163,11 +139,6 @@ def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
     #    'n_along_exon'].max().reset_index().n_along_exon
 
     return pyr.PyRanges(df)
-
-
-polya_tr_df = get_total_n_on_exon(pyranges=polya_tr_df)
-# print(polya_tr_df[['total_n_on_exon']])
-# print(polya_tr_df.columns)
 
 
 def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Start', 'End', 'paqr_name', 'ThickEnd', 'Strand', 'n_along_exon', 'total_n_on_exon', 'paqr_long_name', 'gene_id']):
@@ -186,10 +157,35 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
 
     df.to_csv(outfile, index=False, header=False, sep='\t')
 
-    # df = df.rename(columns={'paqr_name': 'Name', 'Score': 'ThickEnd', 'ThickStart': 'n_along_exon',
-    #                        'ThickEnd': 'total_n_on_exon', 'ItemRGB': 'paqr_long_name', 'BlockCount': 'gene_id'})
-    # pyranges = pyr.PyRanges(df)
-    # pyranges.to_bed(path=outfile)
 
+if __name__ == '__main__':
 
-write_to_paqr_bed(pyranges=polya_tr_df, outfile=out)
+    tr_gtf_file = sys.argv[1]
+    polya_bed_path = sys.argv[2]
+    out = sys.argv[3]
+
+    polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
+    # print(polya_bed)
+
+    tr_gtf = pyr.read_gtf(f=tr_gtf_path)
+    tr_gtf = get_last_exons(ranges_obj=tr_gtf)
+
+    polya_tr_df = join_by_intersect(pyranges1=polya_bed, pyranges2=tr_gtf)
+    # print(polya_tr_df)
+    # print(polya_tr_df.columns)
+
+    polya_tr_df = add_paqr_name(pyranges=polya_tr_df)
+    polya_tr_df = add_paqr_long_name(pyranges=polya_tr_df)
+    # print(polya_tr_df[['paqr_long_name']])
+    # print(polya_tr_df.columns)
+
+    polya_tr_df = add_n_along_exon(pyranges=polya_tr_df)
+
+    # print(polya_tr_df[['transcript_id', 'n_along_exon']].head(n=8))
+    # print(polya_tr_df.columns)
+
+    polya_tr_df = get_total_n_on_exon(pyranges=polya_tr_df)
+    # print(polya_tr_df[['total_n_on_exon']])
+    # print(polya_tr_df.columns)
+
+    write_to_paqr_bed(pyranges=polya_tr_df, outfile=out)

@@ -50,3 +50,24 @@ rule get_transcripts_BED12:
         gtftoGenePred {input.tr_gtf} {params.tmp_genePred}
         genePredToBed {params.tmp_genePred} {output.tr_bed}
         '''
+
+rule get_clusters_BED:
+    input:
+        tr_gtf = tr_gtf = os.path.join(config['output_dir'],
+                                       config['output_subdir'], config['transcripts_gtf_name'])
+    output:
+        clusters_bed = os.path.join(config['output_dir'], config['clusters_name'])
+
+    params:
+        script = os.path.join(config['scripts_dir'], "get_paqr_polya_bed.py"),
+        polyA_bed = config['polyA_bed']
+
+    conda: "paqr_annotations_env.yaml"
+
+    shell:
+        '''
+        python {params.script} \
+        {input.tr_gtf} \
+        {params.polyA_bed} \
+        {output.clusters_bed}
+        '''
