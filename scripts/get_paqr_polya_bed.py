@@ -160,7 +160,7 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
 
 if __name__ == '__main__':
 
-    tr_gtf_file = sys.argv[1]
+    tr_gtf_path = sys.argv[1]
     polya_bed_path = sys.argv[2]
     out = sys.argv[3]
 
