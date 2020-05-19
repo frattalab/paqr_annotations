@@ -27,6 +27,7 @@ upstream_polyA_signal = BlockSizes
 '''
 
 import pyranges as pyr
+import pandas as pd
 import sys
 from get_compliant_genes import get_last_exons
 
@@ -91,7 +92,7 @@ def add_paqr_long_name(pyranges=None, col_name='paqr_long_name'):
     pyranges = pyranges.as_df()
 
     def f(x): return ':'.join([x['transcript_id'], x['exon_number'],
-                               x['exon_number'], str(x['Start_b']), str(x['Start_b'])])
+                               x['exon_number'], str(x['Start_b']), str(x['End_b'])])
     pyranges[col_name] = pyranges.apply(f, axis=1)
 
     return pyr.PyRanges(pyranges)
@@ -138,7 +139,7 @@ def add_n_along_exon(pyranges=None, col_name='n_along_exon'):
 
 polya_tr_df = add_n_along_exon(pyranges=polya_tr_df)
 
-#print(polya_tr_df[['transcript_id', 'n_along_exon']].head(n=8))
+# print(polya_tr_df[['transcript_id', 'n_along_exon']].head(n=8))
 # print(polya_tr_df.columns)
 
 
@@ -147,13 +148,37 @@ def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
     Add a column containing total number of polyA sites on given exon
     '''
     df = pyranges.as_df()
+    print("nrows: %s" % (len(df.index)))
 
-    def get_n_sites(x):
-        return x.sort_values('n_along_exon', ascending=False).drop_duplicates(['transcript_id'])
+    # Get maximum n_along_exon for each transcript
+    # Returns df of transcript_id | n_along_exon
+    a = df.groupby('transcript_id')['n_along_exon'].max(
+    ).reset_index().rename(columns={'n_along_exon': col_name})
 
-    df['total_n_on_exon'] = df.groupby('transcript_id')['n_along_exon'].max().reset_index()
-    return(df)
+    # inner join df with a (adds column to df for given transcript_id of total_n_sites)
+    df = pd.merge(df, a, on='transcript_id')
+
+    # a = df.groupby('transcript_id').apply(get_n_sites)
+    # = df.groupby('transcript_id')[
+    #    'n_along_exon'].max().reset_index().n_along_exon
+
+    return pyr.PyRanges(df)
 
 
-test_df = get_total_n_on_exon(pyranges=polya_tr_df)
-print(test_df)
+polya_tr_df = get_total_n_on_exon(pyranges=polya_tr_df)
+print(polya_tr_df[['total_n_on_exon']])
+print(polya_tr_df.columns)
+
+
+def write_to_paqr_bed(pyranges=None, col_order=['Chromosome', 'Start', 'End', 'paqr_name', 'ThickEnd', 'Strand', 'total_n_on_exon', 'paqr_long_name', 'gene_id']):
+    '''
+    Need columns in following order:
+    Chromosome | Start | End | <chr>:<strand>:<coord>:<cluster_annotation> | n_supporting_protocols/samples | Strand | site_n_on_exon |
+    total_n_on_exon | <transcript_id>:<exon_number>:<n_exons_on_tr>:<exon_start>:<exon_end> | gene_id
+    To do this I need to subset pyranges for following columns:
+
+    Chromosome | Start | End | paqr_name | ThickEnd | Strand | total_n_on_exon | paqr_long_name | gene_id
+    '''
+
+    pyranges = pyranges[[col_order]]
+    return pyranges
