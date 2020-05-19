@@ -166,19 +166,30 @@ def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
 
 
 polya_tr_df = get_total_n_on_exon(pyranges=polya_tr_df)
-print(polya_tr_df[['total_n_on_exon']])
-print(polya_tr_df.columns)
+# print(polya_tr_df[['total_n_on_exon']])
+# print(polya_tr_df.columns)
 
 
-def write_to_paqr_bed(pyranges=None, col_order=['Chromosome', 'Start', 'End', 'paqr_name', 'ThickEnd', 'Strand', 'total_n_on_exon', 'paqr_long_name', 'gene_id']):
+def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Start', 'End', 'paqr_name', 'ThickEnd', 'Strand', 'n_along_exon', 'total_n_on_exon', 'paqr_long_name', 'gene_id']):
     '''
     Need columns in following order:
     Chromosome | Start | End | <chr>:<strand>:<coord>:<cluster_annotation> | n_supporting_protocols/samples | Strand | site_n_on_exon |
     total_n_on_exon | <transcript_id>:<exon_number>:<n_exons_on_tr>:<exon_start>:<exon_end> | gene_id
     To do this I need to subset pyranges for following columns:
 
-    Chromosome | Start | End | paqr_name | ThickEnd | Strand | total_n_on_exon | paqr_long_name | gene_id
+    Chromosome | Start | End | paqr_name | ThickEnd | Strand | n_along_exon | total_n_on_exon | paqr_long_name | gene_id
     '''
 
-    pyranges = pyranges[[col_order]]
-    return pyranges
+    pyranges = pyranges[col_order]
+    df = pyranges.as_df()
+    df = df[col_order]
+
+    df.to_csv(outfile, index=False, header=False, sep='\t')
+
+    # df = df.rename(columns={'paqr_name': 'Name', 'Score': 'ThickEnd', 'ThickStart': 'n_along_exon',
+    #                        'ThickEnd': 'total_n_on_exon', 'ItemRGB': 'paqr_long_name', 'BlockCount': 'gene_id'})
+    # pyranges = pyr.PyRanges(df)
+    # pyranges.to_bed(path=outfile)
+
+
+write_to_paqr_bed(pyranges=polya_tr_df, outfile=out)
