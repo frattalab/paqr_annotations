@@ -39,25 +39,27 @@ def get_last_exons(ranges_obj):
 
 def get_non_overlapping_genes(gtf_df=None):
     '''
-    returns list of gene_ids of non-overlapping, protein-coding or lncRNA genes
+    returns list of transcript_ids of non-overlapping, protein-coding or lncRNA genes
+    non-overlapping = last exon of transcript doesn't overlap with coordinates of
     '''
 
     # print(gtf_df.columns)
-    # gtf_df = gtf_df[gtf_df.Feature == 'gene']
+
     gtf_df = gtf_df[gtf_df.gene_type.isin(['protein_coding', 'lncRNA'])]
 
     # get last exon for each transcript
-    gtf_df = get_last_exons(ranges_obj=gtf_df)
+    exons = get_last_exons(ranges_obj=gtf_df)
 
-    gtf_df = gtf_df.as_df()
+    exons = exons.as_df()
 
+    # print(gtf_df.dtypes)
     # remove entries with a transcript support level tag of 'NA' or 'NaN'
-    print(gtf_df.dtypes)
-    #gtf_df = gtf_df.dropna(axis=0, subset=['transcript_support_level'])
-    gtf_df = gtf_df[pd.to_numeric(gtf_df['transcript_support_level'], errors='coerce').notnull()]
+    # gtf_df = gtf_df.dropna(axis=0, subset=['transcript_support_level'])
+    exons = exons[pd.to_numeric(exons['transcript_support_level'], errors='coerce').notnull()]
 
-    print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1).groupby(
-        'gene_id').get_group('ENSMUSG00000026131.20'))
+    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1))
+    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1).groupby(
+    #    'gene_id').get_group('ENSMUSG00000026131.20'))
     # print(gtf_df.groupby('gene_id').get_group('ENSMUSG00000000544.14'))
 
     def select_best_tsl_isoforms(x):
@@ -75,66 +77,89 @@ def get_non_overlapping_genes(gtf_df=None):
         # sorts ascending order - TSL: 1 is best supported
         # return x.sort_values('transcript_support_level').drop_duplicates(['transcript_id'])
 
-    # Get best supported transcript for each gene (transcript isoforms can have same last exon)
-    # i.e. 1 transcript_id for each gene
-
-    testing = select_best_tsl_isoforms(x=gtf_df)
-    print(testing.drop(testing.columns[[22, 23, 24]], axis=1).groupby(
-        'gene_id').get_group('ENSMUSG00000026131.20'))
-
-    # grouped = gtf_df.groupby('gene_id').apply(select_best_tsl)
-    # print(grouped.drop(grouped.columns[[22, 23, 24]], axis=1))
+    # Get best supported transcripts for each gene (transcript isoforms can have same last exon)
+    exons = select_best_tsl_isoforms(x=exons)
+    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1))
+    # print(testing.drop(testing.columns[[22, 23, 24]], axis=1).groupby(
+    #    'gene_id').get_group('ENSMUSG00000026131.20'))
 
     # cluster function gives a common id to overlapping intervals
     # genes with common id/ id Count > 1 can be filtered out of pyranges
-    gtf_df = gtf_df.cluster(strand=False, count=True)
+    # gtf_df = pyr.PyRanges(gtf_df)
+    # gtf_df = gtf_df.cluster(strand=False, count=True)
+
+    # print(gtf_df[['gene_id', 'Cluster', 'Count']])
+
+    # Interest is finding exons that can be unambigously assigned to a SINGLE gene
+    # cluster function may give common ID to isoforms of the same gene that overlap in last exon
+    # if cluster group contains more than one gene it should be filtered out (evaluate False in filter)
+
+    # gtf_df = gtf_df.as_df()
+    # gtf_df = gtf_df.groupby('Cluster').filter(lambda x: len(list(set(x['gene_id']))) == 1)
+    # print(gtf_df)
+    # gtf_df = gtf_df[gtf_df.Count == 1]
+
+    exons = pyr.PyRanges(exons)
+    # pyranges of all protein-coding and lncRNA genes in GTF
+    gtf_df = gtf_df[gtf_df.Feature == 'gene']
+    # join two pyranges - if last exon overlaps with gene annotation then coordinates are joined
+    # only overlaps on the same strand are kept
+    joined = exons.join(gtf_df, strandedness=None, how=None)
+
+    # print(joined.columns)
+    # print(joined)
+    joined = joined.as_df()
+    # print(joined[['gene_id', 'gene_id_b']])
+
+    # looking to filter out cases where exon gene_id differs to gene_id_b from gtf_df
+    # i.e. exon overlaps with coordinates of a different gene
+    joined = joined.groupby('transcript_id').filter(
+        lambda x: (x['gene_id'] == x['gene_id_b']).all())
+
+    # print(joined)
+    transcript_id_list = joined.transcript_id.to_list()
+    print(len(transcript_id_list))
+    return transcript_id_list
+
+
+non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges))
+
+
+def get_multi_polya_transcripts(gtf_df = None, subset_list = None, polya_bed_path = None):
 
     # print(gtf_df.columns)
-    gtf_df = gtf_df[gtf_df.Count == 1]
+    gtf_df=gtf_df[gtf_df.gene_id.isin(subset_list)]
 
-    gene_id_list = gtf_df.gene_id.to_list()
-
-    return gene_id_list
-
-
-print(get_non_overlapping_genes(gtf_df=gtf_pyranges))
-
-
-def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=None):
-
-    # print(gtf_df.columns)
-    gtf_df = gtf_df[gtf_df.gene_id.isin(subset_list)]
-
-    polya_bed = pyr.readers.read_bed(f=polya_bed_path, as_df=True)
+    polya_bed=pyr.readers.read_bed(f = polya_bed_path, as_df = True)
     # add chr prefix to Chromosome column (overlap won't work without same chromosome names)
-    polya_bed['Chromosome'] = 'chr' + polya_bed['Chromosome'].astype(str)
+    polya_bed['Chromosome']='chr' + polya_bed['Chromosome'].astype(str)
 
-    polya_bed = pyr.PyRanges(polya_bed)
+    polya_bed=pyr.PyRanges(polya_bed)
     # print(polya_bed)
-    gtf_last_exons = get_last_exons(gtf_df)
+    gtf_last_exons=get_last_exons(gtf_df)
     # print(gtf_last_exons)
 
     # 4. count_overlaps with BED file od polyA_sites
-    gtf_last_exons = gtf_last_exons.count_overlaps(
-        polya_bed, strandedness="same", keep_nonoverlapping=False)
+    gtf_last_exons=gtf_last_exons.count_overlaps(
+        polya_bed, strandedness = "same", keep_nonoverlapping = False)
 
     # print(gtf_last_exons[["transcript_id", "NumberOverlaps"]])
 
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
-    trs = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
+    trs=gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
     # print(trs)
-    tr_list = list(set(trs.transcript_id.to_list()))
+    tr_list=list(set(trs.transcript_id.to_list()))
 
     return tr_list
 
 
-def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
+def write_overlapping_gtf(gtf_df = None, subset_list = None, outfile = None):
     '''
     Subsets gtf for transcripts containing at least two overlapping polyA_sites
     write to gtf
     '''
-    gtf_df = gtf_df[gtf_df.transcript_id.isin(subset_list)]
-    gtf_df.to_gtf(path=outfile,)
+    gtf_df=gtf_df[gtf_df.transcript_id.isin(subset_list)]
+    gtf_df.to_gtf(path = outfile,)
 
 
 '''
@@ -145,7 +170,7 @@ if __name__ == '__main__':
 
     gtf_pyranges = pyr.readers.read_gtf(f=gtf)
 
-    # list of gene ids that do not overlap with other genes on the same strand
+    # list of transcript ids that do not overlap with other genes on the same strand
     non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
     print("number of genes that do not overlap on the same strand is %s" %
