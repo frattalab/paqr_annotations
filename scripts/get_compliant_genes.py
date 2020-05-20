@@ -12,10 +12,10 @@ import pyranges as pyr
 import pandas as pd
 
 
-gtf = "/home/sam/paqr_annotations/tests/gencode.chr1.vM25.annotation.gtf"
-polya_clusters = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-out = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-gtf_pyranges = pyr.readers.read_gtf(f=gtf)
+#gtf = "/home/sam/paqr_annotations/tests/gencode.chr1.vM25.annotation.gtf"
+#polya_clusters = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+#out = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+#gtf_pyranges = pyr.readers.read_gtf(f=gtf)
 
 
 def get_last_exons(ranges_obj):
@@ -122,7 +122,7 @@ def get_non_overlapping_genes(gtf_df=None):
     return transcript_id_list
 
 
-non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
+#non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
 
 def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=None):
@@ -137,7 +137,7 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
     polya_bed = pyr.PyRanges(polya_bed)
     # print(polya_bed)
     gtf_last_exons = get_last_exons(gtf_df)
-    print(gtf_last_exons[['transcript_id', 'gene_id']])
+    #print(gtf_last_exons[['transcript_id', 'gene_id']])
 
     # 4. count_overlaps with BED file od polyA_sites
     gtf_last_exons = gtf_last_exons.count_overlaps(
@@ -146,7 +146,7 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
     gtf_last_exons = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
 
-    print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
+    #print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
     # print(gtf_last_exons[["transcript_id", "NumberOverlaps"]])
     # print(gtf_last_exons.as_df().groupby('gene_id').get_group(
     #    'ENSMUSG00000090394.8'))
@@ -156,27 +156,30 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
             lambda x: x.isnull().sum(axis=1)).reset_index(drop=True)
         idx = x.groupby('gene_id')['n_na'].transform(min) == x['n_na']
         return x[idx]
+
     # PAQR seems to need one transcript per gene only
     # Filter for 'best annotated transcript' in line with 'transcript_support_level' filter previously
     # 'best annotated' = fewest 'NaNs' for each transcript
+    # if same number both are kept
 
     gtf_last_exons = get_best_supported_transcript(gtf_last_exons.as_df())
-    n_exons_per_gene = gtf_last_exons.groupby('gene_id').size()
-    print(n_exons_per_gene[n_exons_per_gene > 1])
+
+    #n_exons_per_gene = gtf_last_exons.groupby('gene_id').size()
+    #print(n_exons_per_gene[n_exons_per_gene > 1])
     #grouped = gtf_last_exons.as_df().groupby('gene_id').apply(lambda x: x.isnull().sum(axis=1))
     #grouped = grouped.idxmin()
     # print(grouped)
 
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
-    # trs=gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
+    trs = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
     # print(trs)
-    # tr_list=list(set(trs.transcript_id.to_list()))
-
+    tr_list = list(set(trs.transcript_id.to_list()))
+    # print(len(tr_list))
     return tr_list
 
 
-print(get_multi_polya_transcripts(gtf_df=gtf_pyranges,
-                                  subset_list=non_overlapping_genes, polya_bed_path=polya_clusters))
+# print(get_multi_polya_transcripts(gtf_df=gtf_pyranges,
+#                                  subset_list=non_overlapping_genes, polya_bed_path=polya_clusters))
 
 
 def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
@@ -188,7 +191,6 @@ def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
     gtf_df.to_gtf(path=outfile,)
 
 
-'''
 if __name__ == '__main__':
     gtf = sys.argv[1]
     polya_clusters = sys.argv[2]
@@ -199,7 +201,7 @@ if __name__ == '__main__':
     # list of transcript ids that do not overlap with other genes on the same strand
     non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
-    print("number of genes that do not overlap on the same strand is %s" %
+    print("number of last exons that do not overlap with different gene on the same strand is %s" %
           (len(non_overlapping_genes)))
 
     # list of transcript ids with at least two overlapping polyA_sites in last exon
@@ -211,4 +213,3 @@ if __name__ == '__main__':
 
     write_overlapping_gtf(gtf_df=gtf_pyranges, subset_list=multi_overlap_transcripts, outfile=out)
     print("gtf containing transcipts with multiple overlapping polyA_sites in last exon written to %s" % (out))
-'''
