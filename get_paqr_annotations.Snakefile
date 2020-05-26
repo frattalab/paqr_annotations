@@ -22,6 +22,7 @@ rule get_non_overlap_multi_polyA_genes:
                               config['output_subdir'], config['transcripts_gtf_name'])
     params:
         script = os.path.join(config['scripts_dir'], "get_compliant_genes.py"),
+        atlas_version = config['polyA_atlas_version']
 
     conda: "paqr_annotations_env.yaml"
 
@@ -30,6 +31,7 @@ rule get_non_overlap_multi_polyA_genes:
         python {params.script} \
         {input.gtf} \
         {input.polyA_bed} \
+        {params.atlas_version} \
         {output.tr_gtf}
         '''
 
@@ -56,11 +58,12 @@ rule get_clusters_BED:
         tr_gtf = os.path.join(config['output_dir'],
                               config['output_subdir'], config['transcripts_gtf_name'])
     output:
-        clusters_bed = os.path.join(config['output_dir'], config['clusters_name'])
+        clusters_bed = os.path.join(config['output_dir'], config['clusters_name']),
 
     params:
         script = os.path.join(config['scripts_dir'], "get_paqr_polya_bed.py"),
-        polyA_bed = config['polyA_bed']
+        polyA_bed = config['polyA_bed'],
+        atlas_version = config['polyA_atlas_version']
 
     conda: "paqr_annotations_env.yaml"
 
@@ -69,5 +72,6 @@ rule get_clusters_BED:
         python {params.script} \
         {input.tr_gtf} \
         {params.polyA_bed} \
+        {params.atlas_version} \
         {output.clusters_bed}
         '''
