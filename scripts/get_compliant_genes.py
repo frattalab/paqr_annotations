@@ -125,26 +125,27 @@ def get_non_overlapping_genes(gtf_df=None):
 #non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
 
-def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=None):
+def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=None, polya_version=1):
 
     # print(gtf_df.columns)
     gtf_df = gtf_df[gtf_df.transcript_id.isin(subset_list)]
 
-    polya_bed = pyr.readers.read_bed(f=polya_bed_path, as_df=True)
-    # add chr prefix to Chromosome column (overlap won't work without same chromosome names)
-    polya_bed['Chromosome'] = 'chr' + polya_bed['Chromosome'].astype(str)
+    if polya_version == 1:
+        polya_bed = pyr.readers.read_bed(f=polya_bed_path)
 
-    polya_bed = pyr.PyRanges(polya_bed)
+    elif polya_version == 2:
+        polya_bed = pyr.readers.read_bed(f=polya_bed_path, as_df=True)
+        # add chr prefix to Chromosome column (overlap won't work without same chromosome names)
+        polya_bed['Chromosome'] = 'chr' + polya_bed['Chromosome'].astype(str)
+        polya_bed = pyr.PyRanges(polya_bed)
+
     # print(polya_bed)
     gtf_last_exons = get_last_exons(gtf_df)
     #print(gtf_last_exons[['transcript_id', 'gene_id']])
 
-    # 4. count_overlaps with BED file od polyA_sites
+    # 4. count_overlaps with BED file of polyA_sites
     gtf_last_exons = gtf_last_exons.count_overlaps(
         polya_bed, strandedness="same", keep_nonoverlapping=True)
-
-    # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
-    gtf_last_exons = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
 
     #print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
     # print(gtf_last_exons[["transcript_id", "NumberOverlaps"]])
@@ -157,7 +158,7 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
         idx = x.groupby('gene_id')['n_na'].transform(min) == x['n_na']
         return x[idx]
 
-    # PAQR seems to need one transcript per gene only
+    # Trying to minimise overlapping transcripts for each gene
     # Filter for 'best annotated transcript' in line with 'transcript_support_level' filter previously
     # 'best annotated' = fewest 'NaNs' for each transcript
     # if same number both are kept
@@ -194,7 +195,8 @@ def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
 if __name__ == '__main__':
     gtf = sys.argv[1]
     polya_clusters = sys.argv[2]
-    out = sys.argv[3]
+    atlas_version = int(sys.argv[3])
+    out = sys.argv[4]
 
     gtf_pyranges = pyr.readers.read_gtf(f=gtf)
 

@@ -158,12 +158,68 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
     df.to_csv(outfile, index=False, header=False, sep='\t')
 
 
+def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
+    '''
+
+    '''
+    if atlas_version == 1:
+        # No need to add 'chr' prefix
+        polya_bed = pyr.readers.read_bed(f=polya_bed_path)
+
+        # read in GTF with multi-overlap transcripts
+        tr_gtf = pyr.read_gtf(f=tr_gtf_path)
+        tr_gtf = get_last_exons(ranges_obj=tr_gtf)
+
+        polya_bed = join_by_intersect(pyranges1=polya_bed, pyranges2=tr_gtf)
+
+        # short name column already in correct format - skip to adding long name
+        polya_bed = add_paqr_long_name(pyranges=polya_bed)
+
+        # add columns with order along exon & number of exons on transcript
+        polya_bed = add_n_along_exon(pyranges=polya_bed)
+        polya_bed = get_total_n_on_exon(pyranges=polya_bed)
+
+        # first 6 already provided in format of version 1 BED file
+        column_order = ['Chromosome', 'Start', 'End', 'Name', 'Score', 'Strand',
+                        'n_along_exon', 'total_n_on_exon', 'paqr_long_name', 'gene_id']
+
+        write_to_paqr_bed(pyranges=polya_bed, outfile=outfile, col_order=column_order)
+
+    elif atlas_version == 2:
+        # need to add chr prefix before joining
+        polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
+
+        # read in GTF with multi-overlap transcripts
+        tr_gtf = pyr.read_gtf(f=tr_gtf_path)
+        tr_gtf = get_last_exons(ranges_obj=tr_gtf)
+
+        polya_bed = join_by_intersect(pyranges1=polya_bed, pyranges2=tr_gtf)
+
+        # version 2 doesn't have name column in formatting required for PAQR - need to add both short & long name
+        polya_bed = add_paqr_name(pyranges=polya_bed)
+        polya_bed = add_paqr_long_name(pyranges=polya_bed)
+
+        # add columns with order along exon & number of exons on transcript
+        polya_bed = add_n_along_exon(pyranges=polya_bed)
+        polya_bed = get_total_n_on_exon(pyranges=polya_bed)
+
+        # v2.0 has custom format
+        column_order = ['Chromosome', 'Start', 'End', 'paqr_name', 'ThickEnd',
+                        'Strand', 'n_along_exon', 'total_n_on_exon', 'paqr_long_name', 'gene_id']
+
+        write_to_paqr_bed(pyranges=polya_bed, outfile=outfile, col_order=column_order)
+
+
 if __name__ == '__main__':
 
     tr_gtf_path = sys.argv[1]
     polya_bed_path = sys.argv[2]
-    out = sys.argv[3]
+    atlas_version = int(sys.argv[3])
+    out = sys.argv[4]
 
+    process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
+
+    '''
     polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
     # print(polya_bed)
 
@@ -189,3 +245,4 @@ if __name__ == '__main__':
     # print(polya_tr_df.columns)
 
     write_to_paqr_bed(pyranges=polya_tr_df, outfile=out)
+    '''
