@@ -1,16 +1,22 @@
 #Config file for paqr annotations snakemake workflow
 
 #Select the 'Content':Comprehensive gene annotation, 'Regions:'	CHR file
-gencode_gtf: tests/gencode.chr1.vM25.annotation.gtf
+gencode_gtf: gencode.vM25.annotation.gtf
+
 
 polyA_bed: atlas.clusters.2.0.GRCm38.96.bed
 
-output_dir: new_annotations/
+#version number of PolyASite atlas
+#put 1 for first release (2014/15)
+#put 2 for second release (2019)
+polyA_atlas_version: 1
 
-#Name of output BED12 transcripts file
+output_dir: new_annotations2/
+
+#Name of output BED12 transcripts file (stored in output_dir)
 transcripts_name: full_transcripts.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
 
-#Name of output BED12 polyA clusters file
+#Name of output BED12 polyA clusters file (stored in output_dir)
 clusters_name: clusters.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
 
 
