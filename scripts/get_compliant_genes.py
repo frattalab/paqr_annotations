@@ -12,10 +12,11 @@ import pyranges as pyr
 import pandas as pd
 
 
-#gtf = "/home/sam/paqr_annotations/tests/gencode.chr1.vM25.annotation.gtf"
-#polya_clusters = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-#out = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-#gtf_pyranges = pyr.readers.read_gtf(f=gtf)
+gtf = "/home/sam/paqr_annotations/tests/gencode.chr1.vM25.annotation.gtf"
+polya_clusters = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+atlas_version = 2
+out = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+gtf_pyranges = pyr.readers.read_gtf(f=gtf)
 
 
 def get_last_exons(ranges_obj):
@@ -104,7 +105,7 @@ def get_non_overlapping_genes(gtf_df=None):
     gtf_df = gtf_df[gtf_df.Feature == 'gene']
     # join two pyranges - if last exon overlaps with gene annotation then coordinates are joined
     # only overlaps on the same strand are kept
-    joined = exons.join(gtf_df, strandedness=None, how=None)
+    joined = exons.join(gtf_df, strandedness="same", how=None)
 
     # print(joined.columns)
     # print(joined)
@@ -122,7 +123,10 @@ def get_non_overlapping_genes(gtf_df=None):
     return transcript_id_list
 
 
-#non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
+non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
+
+print("number of last exons that do not overlap with different gene on the same strand is %s" %
+      (len(non_overlapping_genes)))
 
 
 def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=None, polya_version=2):
@@ -141,13 +145,13 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
 
     # print(polya_bed)
     gtf_last_exons = get_last_exons(gtf_df)
-    #print(gtf_last_exons[['transcript_id', 'gene_id']])
+    # print(gtf_last_exons[['transcript_id', 'gene_id']])
 
     # 4. count_overlaps with BED file of polyA_sites
     gtf_last_exons = gtf_last_exons.count_overlaps(
         polya_bed, strandedness="same", keep_nonoverlapping=True)
 
-    #print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
+    # print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
     # print(gtf_last_exons[["transcript_id", "NumberOverlaps"]])
     # print(gtf_last_exons.as_df().groupby('gene_id').get_group(
     #    'ENSMUSG00000090394.8'))
@@ -164,12 +168,12 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
     # 'best annotated' = fewest 'NaNs' for each transcript
     # if same number both are kept
 
-    #gtf_last_exons = get_best_supported_transcript(gtf_last_exons.as_df())
+    # gtf_last_exons = get_best_supported_transcript(gtf_last_exons.as_df())
 
-    #n_exons_per_gene = gtf_last_exons.groupby('gene_id').size()
-    #print(n_exons_per_gene[n_exons_per_gene > 1])
-    #grouped = gtf_last_exons.as_df().groupby('gene_id').apply(lambda x: x.isnull().sum(axis=1))
-    #grouped = grouped.idxmin()
+    # n_exons_per_gene = gtf_last_exons.groupby('gene_id').size()
+    # print(n_exons_per_gene[n_exons_per_gene > 1])
+    # grouped = gtf_last_exons.as_df().groupby('gene_id').apply(lambda x: x.isnull().sum(axis=1))
+    # grouped = grouped.idxmin()
     # print(grouped)
 
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
@@ -181,8 +185,11 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
     return tr_list
 
 
-# print(get_multi_polya_transcripts(gtf_df=gtf_pyranges,
-#                                  subset_list=non_overlapping_genes, polya_bed_path=polya_clusters))
+multi_overlap_transcripts = get_multi_polya_transcripts(gtf_df=gtf_pyranges,
+                                                        subset_list=non_overlapping_genes, polya_bed_path=polya_clusters, polya_version=atlas_version)
+
+print("number of transcripts with multiple overlapping polyA_sites is %s" %
+      (len(multi_overlap_transcripts)))
 
 
 def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
@@ -194,6 +201,11 @@ def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
     gtf_df.to_gtf(path=outfile,)
 
 
+write_overlapping_gtf(gtf_df=gtf_pyranges, subset_list=multi_overlap_transcripts, outfile=out)
+print("gtf containing transcipts with multiple overlapping polyA_sites in last exon written to %s" % (out))
+
+
+'''
 if __name__ == '__main__':
     gtf = sys.argv[1]
     polya_clusters = sys.argv[2]
@@ -217,3 +229,4 @@ if __name__ == '__main__':
 
     write_overlapping_gtf(gtf_df=gtf_pyranges, subset_list=multi_overlap_transcripts, outfile=out)
     print("gtf containing transcipts with multiple overlapping polyA_sites in last exon written to %s" % (out))
+'''

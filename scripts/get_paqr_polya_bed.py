@@ -32,9 +32,10 @@ import sys
 from get_compliant_genes import get_last_exons
 
 
-#tr_gtf_path = "/home/sam/paqr_annotations/tests/non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-#polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-#out = "/home/sam/paqr_annotations/tests/clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+tr_gtf_path = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+atlas_version = 2
+out = "/home/sam/paqr_annotations/tests/new_join_new_script_clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
 
 
 def tidy_chromosome_column(polya_bed_path=None):
@@ -54,7 +55,7 @@ def join_by_intersect(pyranges1=None, pyranges2=None):
     Joins two given pyranges object, reporting only entries which have same strand overlap
     columns of two objects are appended to one another (pyranges1 first)
     '''
-    df = pyranges1.join(pyranges2, strandedness=None, how=None)
+    df = pyranges1.join(pyranges2, strandedness="same", how=None)
     return df
 
 
@@ -210,6 +211,9 @@ def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
         write_to_paqr_bed(pyranges=polya_bed, outfile=outfile, col_order=column_order)
 
 
+process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
+
+'''
 if __name__ == '__main__':
 
     tr_gtf_path = sys.argv[1]
@@ -218,8 +222,8 @@ if __name__ == '__main__':
     out = sys.argv[4]
 
     process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
-
-    '''
+'''
+'''
     polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
     # print(polya_bed)
 
