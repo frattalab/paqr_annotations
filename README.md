@@ -1,4 +1,4 @@
-```PAQR Annotations Pipeline
+#PAQR Annotations Pipeline
 
 Snakemake pipeline to generate PAQR-compliant transcript annotations with updated reference transcript set & polyAsite 2.0 release poly(A) sites
 
@@ -8,7 +8,8 @@ Per recommendations in issue X:
 -Terminal exon of gene must contain at least two overlapping poly(A) sites (from polyAsite BED file
 
 
-``To dos
-1. Option to strip version numbers from transcript & gene_ids
-2. Options to include/exclude TSL filtering (& impose minimum TSL filter for overlapping transcripts)
+##To dos
+1. How to handle transcripts with exactly the same terminal exon (carry all in annotations file or pick one - how to decide?)
+2. Writing to BED via tab-separated instead of write_bed - losing correct 'basing' of coordinates?
+  - could change column names to expected BED names & write to file via write_bed...
 3. Multithreading (work out how to do some of my pandas functions without converting to DFs and back)
