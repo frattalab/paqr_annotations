@@ -32,10 +32,10 @@ import sys
 from get_compliant_genes import get_last_exons
 
 
-tr_gtf_path = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-atlas_version = 2
-out = "/home/sam/paqr_annotations/tests/new_join_new_script_clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+#tr_gtf_path = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+#polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+#atlas_version = 2
+#out = "/home/sam/paqr_annotations/tests/new_join_new_script_clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
 
 
 def tidy_chromosome_column(polya_bed_path=None):
@@ -151,12 +151,31 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
 
     Chromosome | Start | End | paqr_name | ThickEnd | Strand | n_along_exon | total_n_on_exon | paqr_long_name | gene_id
     '''
-
+    # pyranges only contains columns specified in col_order (Note: DOES NOT ORDER THEM)
     pyranges = pyranges[col_order]
-    df = pyranges.as_df()
-    df = df[col_order]
 
-    df.to_csv(outfile, index=False, header=False, sep='\t')
+    # pyranges columns are always sorted in follow order ('mandatory fields')
+    # Chromosome | Start | End | Strand | <other column names>
+
+    # with default col_order - columns in pyranges are returned in following order
+    # Chromosome | Start | End | Strand | paqr_name | ThickEnd | n_along_exon' | 'total_n_on_exon' | 'paqr_long_name' | 'gene_id'
+
+    # BED12 column names would be:
+    # Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts
+
+    # to change names of columns to match this naming convention, need a list in following order
+    #Chromosome | Start | End | Strand | Name | Score | ThickStart | ThickEnd | ItemRGB | BlockCount
+
+    # Then can use inbuilt to_bed function
+    pyranges_bed_colnames = ['Chromosome', 'Start', 'End', 'Strand',
+                             'Name', 'Score', 'ThickStart', 'ThickEnd', 'ItemRGB', 'BlockCount']
+    pyranges.columns = pyranges_bed_colnames
+
+    pyranges.to_bed(path=outfile)
+
+    #df = pyranges.as_df()
+    #df = df[col_order]
+    #df.to_csv(outfile, index=False, header=False, sep='\t')
 
 
 def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
@@ -211,9 +230,9 @@ def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
         write_to_paqr_bed(pyranges=polya_bed, outfile=outfile, col_order=column_order)
 
 
-process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
+#process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
 
-'''
+
 if __name__ == '__main__':
 
     tr_gtf_path = sys.argv[1]
@@ -222,7 +241,7 @@ if __name__ == '__main__':
     out = sys.argv[4]
 
     process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
-'''
+
 '''
     polya_bed = tidy_chromosome_column(polya_bed_path=polya_bed_path)
     # print(polya_bed)
