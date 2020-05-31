@@ -32,10 +32,10 @@ import sys
 from get_compliant_genes import get_last_exons
 
 
-#tr_gtf_path = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
-#polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
-#atlas_version = 2
-#out = "/home/sam/paqr_annotations/tests/new_join_new_script_clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+# tr_gtf_path = "/home/sam/paqr_annotations/tests/new_join_non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
+# polya_bed_path = "/home/sam/paqr_annotations/atlas.clusters.2.0.GRCm38.96.bed"
+# atlas_version = 2
+# out = "/home/sam/paqr_annotations/tests/new_join_new_script_clusters.non_overlapping.multi_polya.gencode.chr1.vM25.annotation.gtf"
 
 
 def tidy_chromosome_column(polya_bed_path=None):
@@ -125,7 +125,7 @@ def get_total_n_on_exon(pyranges=None, col_name='total_n_on_exon'):
     Add a column containing total number of polyA sites on given exon
     '''
     df = pyranges.as_df()
-    #print("nrows: %s" % (len(df.index)))
+    # print("nrows: %s" % (len(df.index)))
 
     # Get maximum n_along_exon for each transcript
     # Returns df of transcript_id | n_along_exon
@@ -150,6 +150,8 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
     To do this I need to subset pyranges for following columns:
 
     Chromosome | Start | End | paqr_name | ThickEnd | Strand | n_along_exon | total_n_on_exon | paqr_long_name | gene_id
+
+    (ignore) Note: col order should not contain 'Chromosome', 'Start', 'End' at start (can't work out why but output funky without it?!
     '''
     # pyranges only contains columns specified in col_order (Note: DOES NOT ORDER THEM)
     pyranges = pyranges[col_order]
@@ -158,24 +160,25 @@ def write_to_paqr_bed(pyranges=None, outfile=None, col_order=['Chromosome', 'Sta
     # Chromosome | Start | End | Strand | <other column names>
 
     # with default col_order - columns in pyranges are returned in following order
-    # Chromosome | Start | End | Strand | paqr_name | ThickEnd | n_along_exon' | 'total_n_on_exon' | 'paqr_long_name' | 'gene_id'
+    # paqr_name | Chromosome | Start | End | Strand | ThickEnd | n_along_exon' | 'total_n_on_exon' | 'paqr_long_name' | 'gene_id'
 
     # BED12 column names would be:
     # Chromosome Start End Name Score Strand ThickStart ThickEnd ItemRGB BlockCount BlockSizes BlockStarts
 
     # to change names of columns to match this naming convention, need a list in following order
-    #Chromosome | Start | End | Strand | Name | Score | ThickStart | ThickEnd | ItemRGB | BlockCount
-
+    # Name | Chromosome | Start | End | Strand | Score | ThickStart | ThickEnd | ItemRGB | BlockCount
+    # print(pyranges.columns)
     # Then can use inbuilt to_bed function
-    pyranges_bed_colnames = ['Chromosome', 'Start', 'End', 'Strand',
-                             'Name', 'Score', 'ThickStart', 'ThickEnd', 'ItemRGB', 'BlockCount']
-    pyranges.columns = pyranges_bed_colnames
+    # pyranges_bed_colnames = ['Name', 'Chromosome', 'Start', 'End', 'Strand',
+    #                         'Score', 'ThickStart', 'ThickEnd', 'ItemRGB', 'BlockCount']
+    # pyranges.columns = pyranges_bed_colnames
+    # print(pyranges)
+    # print(pyranges.columns)
+    # pyranges.to_bed(path=outfile, keep=True)
 
-    pyranges.to_bed(path=outfile)
-
-    #df = pyranges.as_df()
-    #df = df[col_order]
-    #df.to_csv(outfile, index=False, header=False, sep='\t')
+    df = pyranges.as_df()
+    df = df[col_order]
+    df.to_csv(outfile, index=False, header=False, sep='\t')
 
 
 def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
@@ -230,7 +233,7 @@ def process_polya_bed(polyA_bed_path=None, atlas_version=2, outfile=None):
         write_to_paqr_bed(pyranges=polya_bed, outfile=outfile, col_order=column_order)
 
 
-#process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
+# process_polya_bed(polyA_bed_path=polya_bed_path, atlas_version=atlas_version, outfile=out)
 
 
 if __name__ == '__main__':
