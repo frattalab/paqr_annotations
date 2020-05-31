@@ -146,24 +146,6 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
 
     return transcript_id_list
 
-    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1))
-
-    # cluster function gives a common id to overlapping intervals
-    # genes with common id/ id Count > 1 can be filtered out of pyranges
-    # gtf_df = pyr.PyRanges(gtf_df)
-    # gtf_df = gtf_df.cluster(strand=False, count=True)
-
-    # print(gtf_df[['gene_id', 'Cluster', 'Count']])
-
-    # Interest is finding exons that can be unambigously assigned to a SINGLE gene
-    # cluster function may give common ID to isoforms of the same gene that overlap in last exon
-    # if cluster group contains more than one gene it should be filtered out (evaluate False in filter)
-
-    # gtf_df = gtf_df.as_df()
-    # gtf_df = gtf_df.groupby('Cluster').filter(lambda x: len(list(set(x['gene_id']))) == 1)
-    # print(gtf_df)
-    # gtf_df = gtf_df[gtf_df.Count == 1]
-
 
 #non_overlapping_genes = get_non_overlapping_genes(gtf_df=gtf_pyranges)
 
@@ -234,12 +216,21 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
 #      (len(multi_overlap_transcripts)))
 
 
-def write_overlapping_gtf(gtf_df=None, subset_list=None, outfile=None):
+def write_overlapping_gtf(gtf_df=None, subset_list=None, strip_ver_no=True, outfile=None):
     '''
     Subsets gtf for transcripts containing at least two overlapping polyA_sites
     write to gtf
     '''
     gtf_df = gtf_df[gtf_df.transcript_id.isin(subset_list)]
+
+    if strip_ver_no == True:
+        # ENSMUST00000082908.1 --> ENSMUST00000082908 (expand to two columns, select first column)
+        gtf_df.transcript_id = gtf_df.transcript_id.str.split('.', expand=True)[0]
+        gtf_df.gene_id = gtf_df.gene_id.str.split('.', expand=True)[0]
+
+    elif strip_ver_no == False:
+        pass
+
     gtf_df.to_gtf(path=outfile,)
 
 
