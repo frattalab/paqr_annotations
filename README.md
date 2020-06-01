@@ -1,23 +1,23 @@
 # PAQR Annotations Workflow
 
-Snakemake pipeline to generate PAQR-compliant transcript annotations using **GENCODE** gene annotations of choice & **PolyASite database** (1.0/2.0 release) poly(A) sites
+Snakemake pipeline to generate [PAQR-compliant](https://github.com/zavolanlab/PAQR_KAPAC) transcript annotations using **GENCODE** gene annotations of choice & **PolyASite database** (1.0/2.0 release) poly(A) sites
 
 See [linked issue on PAQR Github for discussion on generating the new annotations](https://github.com/zavolanlab/PAQR_KAPAC/issues/15)
 
 ## Details
 Per recommendations in [following issue](https://github.com/zavolanlab/PAQR_KAPAC/issues/15), and details specified in the [original PAQR/KAPAC paper](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1415-3), PAQR input annotation files must meet the following criteria:
  - transcripts belong to **'protein_coding'** or **'lncRNA'** genes
- - The terminal exon coordinates of a transcript of a given gene must not overlap with another gene (on the same strand)
- - Non-overlapping terminal exons must contain at least two overlapping poly(A) sites defined by the PolyASite database
+ - The terminal exon coordinates of a transcript of a given gene **must not overlap** with the coordinates of another gene (on the same strand)
+ - Non-overlapping terminal exons must contain **at least two overlapping poly(A) sites** defined by the PolyASite database
 
-This workflow satisfies the non-overlapping criteria by identifying the terminal exon for each transcript and checking whether its coordinates overlap with the *gene* (selected tag in 'Feature' column of GTF file) coordinates of a **different gene**.
+This workflow satisfies the non-overlapping criteria by identifying the terminal exon for each transcript and checking whether its coordinates overlap with the *gene* (selected tag in 'Feature' column of GTF file) coordinates of **any other gene**.
 
 I have also included additional, customisable filters for the **'transcript support level' (TSL)** of annotations. [See Ensembl website for descriptions of different TSL flags](https://m.ensembl.org/info/genome/genebuild/transcript_quality_tags.html#tsl). These filters include:
  - Filter out transcripts with an 'NA' TSL flag
  - Minimum TSL threshold
- - Select the 'best supported isoforms' for each gene (see config.yaml file for a more verbose explanation)
+ - Select the 'best supported isoforms' for each gene (see **config.yaml** file for a more verbose explanation)
 
-Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the GENCODE mouse vM25 GTF file ('reference chromosomes only' GTF file, see website for more details) & mouse PolyASite 2.0 release (Human potentially on the way (no promises!)). I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. All transcripts have a transcript_support_level of 1, but you are able to generate files with more relaxed thresholds using this workflow if you are not happy with this.  
+Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the **GENCODE mouse vM25 GTF file** (['reference chromosomes only' GTF file](https://www.gencodegenes.org/mouse/release_M25.html) i.e. first row in table of link) & **mouse PolyASite 2.0 release** BED file. I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. All transcripts have a TSL: 1, but you are able to generate files with more relaxed thresholds using this workflow if you are not happy with this. (Human annotations may be added too... (no promises!))  
 
 As a side note, this workflow is 'backwards compatible' with the PolyASite v1.0 release (wanted to sanity check my approach). Details on how my workflow lines up with provided annotations will follow in due course...
 
@@ -54,7 +54,7 @@ Once you are happy with your configurations, I recommend performing a dry run to
 
 `snakemake -n -p -s get_paqr_annotations.Snakefile`
 
-If everything looks in order, you can then run the workflow with the following command:
+If everything looks in order, you can then run the workflow with the following command (make sure *paqr_annotations* conda environment is active!):
 
 `snakemake --cores 2 -s get_paqr_annotations.Snakefile`
 
