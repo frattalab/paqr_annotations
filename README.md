@@ -78,3 +78,4 @@ Many thanks to [Ralf Schmidt](https://github.com/koljaLanger) for his helpful cl
 3. Option to exclude overlaps with other genes regardless of strand
 4. replace sys.argv with argparse (lazy...)
 5. Add specific details on how new release compares to old polyAsite release, how well my annotations overlap with provided annotations, drop off with TSL filters etc.
+6. Add log files to catch prints from rules (add more verbose explanations about steps selected, how many genes/transcripts lost to filters etc.)
