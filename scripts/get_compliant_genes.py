@@ -104,19 +104,25 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
     '''
     returns list of transcript_ids of non-overlapping, protein-coding or lncRNA genes
     non-overlapping = last exon of transcript doesn't overlap with coordinates of a DIFFERENT gene
+
+    1. Get pyranges object containing terminal exons of all protein_coding & lncRNA transcripts
+    2. Filter these transcripts for transcript_support_level (if set)
+    3. Subset gtf_df to contain coordinates of 'gene' features ONLY
+    4. Perform same-stranded join of terminal exons pyranges & subsetted gtf_df pyranfes
+    (columns & row values of overlapping interval added to row )
+    5a. If TE's gene_id is different to subsetted gtf_df gene_id ('gene_id_b')
+    --> This terminal exon overlaps with coordinates of a DIFFERENT gene
+    5b. Filter out these terminal exon rows from the joined dataframe
+    6. Return list of transcript_ids from filtered joined dataframe
     '''
 
-    # print(gtf_df.columns)
-    gtf_df = gtf_df[gtf_df.gene_type.isin(['protein_coding', 'lncRNA'])]
+    # 1a. protein-coding & lncRNA entries only
+    exons = gtf_df[gtf_df.gene_type.isin(['protein_coding', 'lncRNA'])]
 
-    # PyRanges object storing last exons for each transcript
-    exons = get_last_exons(ranges_obj=gtf_df)
+    # 1b. PyRanges object storing last exons for each transcript
+    exons = get_last_exons(ranges_obj=exons)
 
-    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1))
-    # print(gtf_df.drop(gtf_df.columns[[22, 23, 24]], axis=1).groupby(
-    #    'gene_id').get_group('ENSMUSG00000026131.20'))
-    # print(gtf_df.groupby('gene_id').get_group('ENSMUSG00000000544.14'))
-
+    # 2. TSL filtering
     if rm_na_tsl == True:
         # can do other filters
         exons = remove_na_tsl(exons)
@@ -130,7 +136,7 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
             pass
 
     elif rm_na_tsl == False:
-        # cannot do other TSL filters
+        # cannot do other TSL filters (having problems with sorting with NA & int values)
         pass
 
     # Interest is finding exons that can be unambigously assigned to a SINGLE gene
@@ -138,15 +144,19 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
     # only overlaps on the same strand are kept
     # Then remove entries where gene_id of last exon is different to overlapping gene_id (gene_id_b)
 
-    # pyranges of all protein-coding and lncRNA genes in GTF (GENE entries only)
+    # 3. GENE entries only of GTF
     gtf_df = gtf_df[gtf_df.Feature == 'gene']
+
+    # 4. Same stranded join of two objects - how = None means only keep overlapping intervals
+    # (expect exon's coordinates to overlap with coordinates of its corresponding gene)
     exons = exons.join(gtf_df, strandedness="same", how=None)
     exons = exons.as_df()
 
-    # looking to filter out cases where exon gene_id differs to gene_id_b from gtf_df
+    # 5 looking to filter out cases where exon gene_id differs to gene_id_b from gtf_df
     exons = exons.groupby('transcript_id').filter(
         lambda x: (x['gene_id'] == x['gene_id_b']).all())
 
+    # 6.
     transcript_id_list = exons.transcript_id.to_list()
     # print(len(transcript_id_list))
 
@@ -184,30 +194,19 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
     gtf_last_exons = gtf_last_exons.count_overlaps(
         polya_bed, strandedness="same", keep_nonoverlapping=True)
 
-    # print(gtf_last_exons[['transcript_id', 'gene_id', 'NumberOverlaps']])
-    # print(gtf_last_exons[["transcript_id", "NumberOverlaps"]])
-    # print(gtf_last_exons.as_df().groupby('gene_id').get_group(
-    #    'ENSMUSG00000090394.8'))
-
-    '''
-    def get_best_supported_transcript(x):
-        x['n_na'] = x.groupby('gene_id').apply(
-            lambda x: x.isnull().sum(axis=1)).reset_index(drop=True)
-        idx = x.groupby('gene_id')['n_na'].transform(min) == x['n_na']
-        return x[idx]
-    '''
-    # Trying to minimise overlapping transcripts for each gene
-    # Filter for 'best annotated transcript' in line with 'transcript_support_level' filter previously
-    # 'best annotated' = fewest 'NaNs' for each transcript
-    # if same number both are kept
+    # def get_best_supported_transcript(x):
+    #    '''
+    #    # Trying to minimise overlapping transcripts for each gene
+    #    # Filter for 'best annotated transcript' in line with 'transcript_support_level' filter previously
+    #    # 'best annotated' = fewest 'NaNs' for each transcript
+    #    # if same number both are kept
+    #    '''
+    #    x['n_na'] = x.groupby('gene_id').apply(
+    #        lambda x: x.isnull().sum(axis=1)).reset_index(drop=True)
+    #    idx = x.groupby('gene_id')['n_na'].transform(min) == x['n_na']
+    #    return x[idx]
 
     # gtf_last_exons = get_best_supported_transcript(gtf_last_exons.as_df())
-
-    # n_exons_per_gene = gtf_last_exons.groupby('gene_id').size()
-    # print(n_exons_per_gene[n_exons_per_gene > 1])
-    # grouped = gtf_last_exons.as_df().groupby('gene_id').apply(lambda x: x.isnull().sum(axis=1))
-    # grouped = grouped.idxmin()
-    # print(grouped)
 
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
     trs = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
