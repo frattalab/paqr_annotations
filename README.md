@@ -10,14 +10,21 @@ Per recommendations in [following issue](https://github.com/zavolanlab/PAQR_KAPA
  - The terminal exon coordinates of a transcript of a given gene **must not overlap** with the coordinates of another gene (on the same strand)
  - Non-overlapping terminal exons must contain **at least two overlapping poly(A) sites** defined by the PolyASite database
 
-This workflow satisfies the non-overlapping criteria by identifying the terminal exon for each transcript and checking whether its coordinates overlap with the *gene* (selected tag in 'Feature' column of GTF file) coordinates of **any other gene**.
+
+This workflow satisfies these criteria by performing the following steps:
+ - Filter for transcripts that have a *gene_type* tag of 'protein_coding' or 'lncRNA'
+ - *'strand-aware'* overlap of terminal exon coordinates with all coordinates of all **gene** Features in input GTF. Terminal exons that overlap with coordinates of a *different gene* are excluded from further analysis.
+ - Valid terminal exons overlap with coordinates of at least two poly(A) site clusters in PolyASite BED file
+
 
 I have also included additional, customisable filters for the **'transcript support level' (TSL)** of annotations. [See Ensembl website for descriptions of different TSL flags](https://m.ensembl.org/info/genome/genebuild/transcript_quality_tags.html#tsl). These filters include:
  - Filter out transcripts with an 'NA' TSL flag
  - Minimum TSL threshold
  - Select the 'best supported isoforms' for each gene (see **config.yaml** file for a more verbose explanation)
 
-Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the **GENCODE mouse vM25 GTF file** (['reference chromosomes only' GTF file](https://www.gencodegenes.org/mouse/release_M25.html) i.e. first row in table of link) & **mouse PolyASite 2.0 release** BED file. I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. All transcripts have a TSL: 1, but you are able to generate files with more relaxed thresholds using this workflow if you are not happy with this. (Human annotations may be added too... (no promises!))  
+
+Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the **GENCODE mouse vM25 GTF file** (['reference chromosomes only' GTF file](https://www.gencodegenes.org/mouse/release_M25.html) i.e. first row in table of link) & **mouse PolyASite 2.0 release** BED file. I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. All transcripts have a TSL: 1, but you are able to generate files with more relaxed thresholds using this workflow if you are not happy with this.
+
 
 As a side note, this workflow is 'backwards compatible' with the PolyASite v1.0 release (wanted to sanity check my approach). Details on how my workflow lines up with provided annotations will follow in due course...
 
@@ -78,4 +85,4 @@ Many thanks to [Ralf Schmidt](https://github.com/koljaLanger) for his helpful cl
 3. Option to exclude overlaps with other genes regardless of strand
 4. replace sys.argv with argparse (lazy...)
 5. Add specific details on how new release compares to old polyAsite release, how well my annotations overlap with provided annotations, drop off with TSL filters etc.
-6. Add log files to catch prints from rules (add more verbose explanations about steps selected, how many genes/transcripts lost to filters etc.)
+6. Add log files to catch prints from rules (only get_clusters_BED rule to-do now)(add more verbose explanations about steps selected, how many genes/transcripts lost to filters etc.)

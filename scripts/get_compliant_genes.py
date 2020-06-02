@@ -3,8 +3,16 @@
 
 '''
 Script to get non-overlapping genes with at least two overlapping polyA sites
-Takes a GENCODE GTF/GFF3 file as input
-Outputs a GTF file containing only transcript_ids with at least two overlapping polyA sites in last exon
+Input: GENCODE GTF file & BED file of polyA_sites from PolyASite database
+Output: GTF file containing transcripts in which
+-their terminal exon does not overlap with the coordinates of a DIFFERENT gene
+-their terminal exon contains at least two overlapping poly(A) sites (coordinates from BED file)
+1. Filter GTF for 'protein_coding' & 'lncRNA' transcripts only
+2. Optional filtering for transcript support level
+3. overlap terminal exons with coordinates of all 'gene' Features in GTF
+4. Remove terminal exons that overlap with coordinates of a different gene
+5. For each valid terminal exon - count number of overlaps with poly(A) site clusters in provided BED file
+6. Output GTF of valid transcripts with at least two overlapping poly(A) sites in the terminal exon
 '''
 
 import sys
