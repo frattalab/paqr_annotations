@@ -22,9 +22,16 @@ rule get_non_overlap_multi_polyA_genes:
                               config['output_subdir'], config['transcripts_gtf_name'])
     params:
         script = os.path.join(config['scripts_dir'], "get_compliant_genes.py"),
-        atlas_version = config['polyA_atlas_version']
+        atlas_version = config['polyA_atlas_version'],
+        rm_na_tsl = config['remove_na_transcript_support_level'],
+        filter_best_isoforms = config['gene_best_supported_transcripts'],
+        minimum_tsl = config['minimum_transcript_support_level'],
+        strip_version_number = config['strip_version_number']
 
     conda: "paqr_annotations_env.yaml"
+
+    log:
+        os.path.join(config['output_dir'], "get_non_overlap_multi_polyA_genes.log")
 
     shell:
         '''
@@ -32,7 +39,12 @@ rule get_non_overlap_multi_polyA_genes:
         {input.gtf} \
         {input.polyA_bed} \
         {params.atlas_version} \
-        {output.tr_gtf}
+        {params.rm_na_tsl} \
+        {params.filter_best_isoforms} \
+        {params.minimum_tsl} \
+        {params.strip_version_number} \
+        {output.tr_gtf} \
+        > {log}
         '''
 
 rule get_transcripts_BED12:

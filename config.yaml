@@ -1,23 +1,46 @@
 #Config file for paqr annotations snakemake workflow
 
+#Path to GTF file downloaded from GENCODE website
 #Select the 'Content':Comprehensive gene annotation, 'Regions:'	CHR file
 gencode_gtf: gencode.vM25.annotation.gtf
 
-
+#path to BED file downloaded from polyAsite database website
 polyA_bed: atlas.clusters.2.0.GRCm38.96.bed
 
 #version number of PolyASite atlas
-#put 1 for first release (2014/15)
-#put 2 for second release (2019)
-polyA_atlas_version: 1
+#put 1 for first release (2014/15), 2 for second release (2019)
+polyA_atlas_version: 2
 
-output_dir: new_annotations2/
+output_dir: new_annotations_new_join/
+
+#Remove version number from transcript & gene_ids?
+#e.g. ENSMUST00000082908.1 --> ENSMUST00000082908 (if "yes")
+#put "yes" or "no" (in quotes)
+strip_version_number: "yes"
 
 #Name of output BED12 transcripts file (stored in output_dir)
 transcripts_name: full_transcripts.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
 
 #Name of output BED12 polyA clusters file (stored in output_dir)
 clusters_name: clusters.mm10.vM25.canonical_chr.tandem.noOverlap_strand_specific.bed
+
+####--------------------------------------------
+#Options for transcript support level filtering
+####--------------------------------------------
+
+#remove transcripts with 'NA' tag for transcript support level
+#put "yes" or "no" (in quotes)
+remove_na_transcript_support_level: "yes"
+
+#Filter at gene level for best supported transcripts by transcript_support_level
+#e.g. if gene has 3 transcripts with TSL: 1 & 1 transcript TSL:3, TSL:1 transcript dropped (all TSL: 1 transcripts are kept)
+#put "yes" or "no" (in quotes)
+gene_best_supported_transcripts: "yes"
+
+#minimum transcript support level for transcripts to be retained in final output file
+#value between 1 & 5 (5 = lowest support)
+#note: ignored if remove_na_transcript_support_level: "no" (sorting fails with NA values (as it stands...))
+minimum_transcript_support_level: 5
 
 
 ######----------------------------------------------
