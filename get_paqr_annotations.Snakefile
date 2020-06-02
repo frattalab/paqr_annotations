@@ -30,6 +30,9 @@ rule get_non_overlap_multi_polyA_genes:
 
     conda: "paqr_annotations_env.yaml"
 
+    log:
+        os.path.join(config['output_dir'], "get_non_overlap_multi_polyA_genes.log")
+
     shell:
         '''
         python {params.script} \
@@ -40,7 +43,8 @@ rule get_non_overlap_multi_polyA_genes:
         {params.filter_best_isoforms} \
         {params.minimum_tsl} \
         {params.strip_version_number} \
-        {output.tr_gtf}
+        {output.tr_gtf} \
+        > {log}
         '''
 
 rule get_transcripts_BED12:

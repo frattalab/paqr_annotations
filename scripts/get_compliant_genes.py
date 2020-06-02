@@ -118,25 +118,51 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
 
     # 1a. protein-coding & lncRNA entries only
     exons = gtf_df[gtf_df.gene_type.isin(['protein_coding', 'lncRNA'])]
+    print("number of distinct genes after filtering for protein coding and lncRNA transcripts is %s" % (
+        len(set(exons.gene_id.to_list()))))
 
     # 1b. PyRanges object storing last exons for each transcript
     exons = get_last_exons(ranges_obj=exons)
+    print("terminal exons extracted for %s distinct genes" % (len(set(exons.gene_id.to_list()))))
+    print("terminal exons extracted for %s distinct transcipts" %
+          (len(set(exons.transcript_id.to_list()))))
 
     # 2. TSL filtering
-    if rm_na_tsl == True:
+    if rm_na_tsl is True:
         # can do other filters
+        print("number of distinct transcripts before removing TSL:NA is %s" %
+              (len(set(exons.transcript_id.to_list()))))
         exons = remove_na_tsl(exons)
+        print("number of distinct transcripts after removing TSL:NA is %s" %
+              (len(set(exons.transcript_id.to_list()))))
+        print("(sanity check) number of distinct genes after removing TSL:NA isoforms is %s" % (
+            len(set(exons.gene_id.to_list()))))
 
         # filter for minimum transcript support level (all transcripts)
         exons = filter_min_tsl(pyranges=exons, min=min_tsl)
+        print("number of distinct transcripts after filtering for minimum TSL:%s is %s" %
+              (min_tsl, len(set(exons.transcript_id.to_list()))))
+        print("(sanity check) number of distinct genes after filtering for minimum TSL:%s is %s" % (min_tsl,
+                                                                                                    len(set(exons.gene_id.to_list()))))
 
-        if gene_best_tsl == True:
+        if gene_best_tsl is True:
+            print("number of transcripts before selecting gene best supported isoforms is %s" %
+                  (len(set(exons.transcript_id.to_list()))))
+
             exons = select_best_tsl_isoforms(exons)
-        elif gene_best_tsl == False:
+
+            print("number of transcripts after selecting gene best supported isoforms is %s" %
+                  (len(set(exons.transcript_id.to_list()))))
+            print("(sanity check) number of distinct genes after selecting gene best supported isoforms is %s" % (
+                len(set(exons.gene_id.to_list()))))
+
+        elif gene_best_tsl is False:
+            print("no gene-level best supported isoform filtering performed. If this was unexpected, double-check config.yaml")
             pass
 
     elif rm_na_tsl == False:
         # cannot do other TSL filters (having problems with sorting with NA & int values)
+        print("No transcript support level pre-filtering performed. If this was unexpected, double-check config.yaml")
         pass
 
     # Interest is finding exons that can be unambigously assigned to a SINGLE gene
@@ -146,6 +172,8 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
 
     # 3. GENE entries only of GTF
     gtf_df = gtf_df[gtf_df.Feature == 'gene']
+    print("total number of 'gene' entries (to check for overlapping) in GTF is %s" %
+          (len(set(gtf_df.gene_id.to_list()))))
 
     # 4. Same stranded join of two objects - how = None means only keep overlapping intervals
     # (expect exon's coordinates to overlap with coordinates of its corresponding gene)
@@ -159,6 +187,8 @@ def get_non_overlapping_genes(gtf_df=None, rm_na_tsl=True, gene_best_tsl=True, m
     # 6.
     transcript_id_list = exons.transcript_id.to_list()
     # print(len(transcript_id_list))
+    print("number of terminal exons that do not overlap with different gene on the same strand is %s" %
+          (len(set(transcript_id_list))))
 
     return transcript_id_list
 
@@ -176,11 +206,15 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
 
     # print(gtf_df.columns)
     gtf_df = gtf_df[gtf_df.transcript_id.isin(subset_list)]
+    print("number of transcripts being checked for overlapping PolyASite poly(A) sites is %s" %
+          (len(set(gtf_df.transcript_id.to_list()))))
 
     if polya_version == 1:
+        print("Processing poly(A) site BED file as if it has PolyASite 1.0 formatting")
         polya_bed = pyr.readers.read_bed(f=polya_bed_path)
 
     elif polya_version == 2:
+        print("Processing poly(A) site BED file as if it has PolyASite 2.0 formatting")
         polya_bed = pyr.readers.read_bed(f=polya_bed_path, as_df=True)
         # add chr prefix to Chromosome column (overlap won't work without same chromosome names)
         polya_bed['Chromosome'] = 'chr' + polya_bed['Chromosome'].astype(str)
@@ -188,9 +222,12 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
 
     # print(polya_bed)
     gtf_last_exons = get_last_exons(gtf_df)
+    print("terminal exons extracted for %s distinct transcipts" %
+          (len(set(gtf_last_exons.transcript_id.to_list()))))
+
     # print(gtf_last_exons[['transcript_id', 'gene_id']])
 
-    # 4. count_overlaps with BED file of polyA_sites
+    # 4. count_overlaps with BED file of polyA_sites (adds column called NumberOverlaps)
     gtf_last_exons = gtf_last_exons.count_overlaps(
         polya_bed, strandedness="same", keep_nonoverlapping=True)
 
@@ -210,6 +247,10 @@ def get_multi_polya_transcripts(gtf_df=None, subset_list=None, polya_bed_path=No
 
     # 5. Get list of transcript ids with at least two overlapping polyA_sites in terminal exon
     trs = gtf_last_exons[gtf_last_exons.NumberOverlaps >= 2]
+    print("number of transcripts with at least two overlapping poly(A) sites in their terminal exons is %s" % (
+        len(set(trs.transcript_id.to_list()))))
+    print("number of genes with at least 1 transcript with multiple,terminal-exon-overlapping polyA sites is %s" %
+          (len(set(trs.gene_id.to_list()))))
     # print(trs)
     trs = trs.as_df()
     tr_list = list(set(trs.transcript_id.to_list()))
@@ -262,20 +303,18 @@ if __name__ == '__main__':
     strip_version_no = yes_no2Boolean(strip_version_no)
 
     gtf_pyranges = pyr.readers.read_gtf(f=gtf)
+    print("Number of distinct genes in %s is %s" % (gtf, len(set(gtf_pyranges.gene_id.to_list()))))
 
     # list of transcript ids that do not overlap with other genes on the same strand
     non_overlapping_genes = get_non_overlapping_genes(
         gtf_df=gtf_pyranges, rm_na_tsl=remove_na, gene_best_tsl=gene_best_isoforms, min_tsl=minimum_tsl)
 
-    print("number of last exons that do not overlap with different gene on the same strand is %s" %
-          (len(non_overlapping_genes)))
-
     # list of transcript ids with at least two overlapping polyA_sites in last exon
     multi_overlap_transcripts = get_multi_polya_transcripts(
         gtf_df=gtf_pyranges, subset_list=non_overlapping_genes, polya_bed_path=polya_clusters, polya_version=atlas_version)
 
-    print("number of transcripts with multiple overlapping polyA_sites is %s" %
-          (len(multi_overlap_transcripts)))
+    # print("number of transcripts with multiple overlapping polyA_sites is %s" %
+    #      (len(multi_overlap_transcripts)))
 
     write_overlapping_gtf(gtf_df=gtf_pyranges, subset_list=multi_overlap_transcripts,
                           strip_ver_no=strip_version_no, outfile=out)
