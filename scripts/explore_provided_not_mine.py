@@ -10,7 +10,7 @@ What about the other 3.5k?
 '''
 
 import pyranges as pr
-import pandas as pd
+#import pandas as pd
 import os
 # going to modify get_non_overlapping_genes & get_multi_polya_transcripts functions slightly
 from get_compliant_genes import get_last_exons, filter_min_tsl, select_best_tsl_isoforms, remove_na_tsl
@@ -359,17 +359,50 @@ print("\n---------------\nCHECKING HOW MANY GENES AND TRANSCRIPTS NEVER HAVE OVE
 provided_not_mine_never_any_multi_polyA_transcripts = [
     transcript for transcript in provided_not_mine_transcripts if transcript not in ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts]
 
-print(len(provided_not_mine_never_any_multi_polyA_transcripts))
+# print(len(provided_not_mine_never_any_multi_polyA_transcripts))
 print("number of transcripts belonging to genes in provided_not_mine_gene_list that do not have overlapping poly(A) sites regardless of above searches is %s" %
       (len(set(provided_not_mine_never_any_multi_polyA_transcripts))))
 
-test = gtf_pyranges_provided[gtf_pyranges_provided.Feature == 'transcript']
-test = test[~test.transcript_id.isin(
-    ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts)]
+print("(sanity check) - number of transcripts in 'gtf_pyranges_provided' is %s" %
+      (len(set(gtf_pyranges_provided.transcript_id.to_list()))))
 
-print("n genes in test is %s" % len(set(test.gene_id.to_list())))
-provided_not_mine_never_any_multi_polyA_genes = gtf_pyranges_provided[gtf_pyranges_provided.transcript_id.isin(
-    provided_not_mine_never_any_multi_polyA_transcripts)].gene_id.to_list()
+# Get gene_ids corresponding to transcripts in ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts
+provided_not_mine_any_multi_polyA_genes = gtf_pyranges_provided[gtf_pyranges_provided.transcript_id.isin(
+    ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts)].gene_id.to_list()
+
+print("number of genes corresponding to transcripts with multiple poly(A) sites by any parameters is %s" %
+      (len(set(provided_not_mine_any_multi_polyA_genes))))
+
+# get list of gene_ids in which never any overlap (i.e. not in provided_not_mine_never_any_multi_polyA_genes)
+provided_not_mine_never_any_multi_polyA_genes = list(set(
+    gtf_pyranges_provided[~gtf_pyranges_provided.gene_id.isin(provided_not_mine_any_multi_polyA_genes)].gene_id.to_list()))
+
+print("(sanity check) number of genes in which none of its transcripts ever have multi_polyA transcripts (any parameters) is %s " %
+      (len(set(provided_not_mine_never_any_multi_polyA_genes))))
+
+# write never any multiple polyA_genes to file
+with open(os.path.join(output_dir, "provided_not_mine_never_any_multi_polyA_tr_gene_ids.txt"), "w") as outfile:
+    for gene in provided_not_mine_never_any_multi_polyA_genes:
+        outfile.write("%s\n" % gene)
+
+# write never any multiple polyA transcripts to file
+with open(os.path.join(output_dir, "provided_not_mine_never_any_multi_polyA_transcript_ids.txt"), "w") as outfile:
+    for transcript in provided_not_mine_never_any_multi_polyA_transcripts:
+        outfile.write("%s\n" % transcript)
+
+
+# Write GTF containing all never_any_multi_polyA_transcripts to file
+gtf_pyranges_provided = gtf_pyranges_provided[gtf_pyranges_provided.transcript_id.isin(
+    provided_not_mine_never_any_multi_polyA_transcripts)]
+gtf_pyranges_provided.to_gtf(path=os.path.join(
+    output_dir, "gencode.mm10.vM14.atlas1.provided.not.mine.never.any.multi.polyA.transcripts.gtf"))
+
+#test = gtf_pyranges_provided[gtf_pyranges_provided.Feature == 'transcript']
+# test = test[~test.transcript_id.isin(
+#    ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts)]
+
+#print("n genes in test is %s" % len(set(test.gene_id.to_list())))
+# provided_not_mine_never_any_multi_polyA_genes = gtf_pyranges_provided[gtf_pyranges_provided.transcript_id.isin(
+#    provided_not_mine_never_any_multi_polyA_transcripts)].gene_id.to_list()
 
 # print(provided_not_mine_never_any_multi_polyA_transcripts)
-print(len(set(provided_not_mine_never_any_multi_polyA_genes)))
