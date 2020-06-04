@@ -359,6 +359,7 @@ print("\n---------------\nCHECKING HOW MANY GENES AND TRANSCRIPTS NEVER HAVE OVE
 provided_not_mine_never_any_multi_polyA_transcripts = [
     transcript for transcript in provided_not_mine_transcripts if transcript not in ignore_strand_nOverlaps_1_multi_polya_provided_not_mine_transcripts]
 
+print(len(provided_not_mine_never_any_multi_polyA_transcripts))
 print("number of transcripts belonging to genes in provided_not_mine_gene_list that do not have overlapping poly(A) sites regardless of above searches is %s" %
       (len(set(provided_not_mine_never_any_multi_polyA_transcripts))))
 
