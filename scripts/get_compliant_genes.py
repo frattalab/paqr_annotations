@@ -99,11 +99,20 @@ def get_last_exons(ranges_obj):
     df = ranges_obj.as_df()
     df = df[df['Feature'] == 'exon']
 
+    # set exon_number dtype to int32 (integer) (selecting max value doesn't work as intended - if >= 10 exons selects 9th)
+    df = df.astype({'exon_number': 'int32'})
+
+    # for each transcript_id, select the largest exon number as entry to retain
+    idx = df.groupby('transcript_id')['exon_number'].transform(
+        max) == df['exon_number']
+    df = df[idx]
+    return pyr.PyRanges(df)
+
     # Select largest 'exon_number' row for each transcript_id - only solution I could get to work...
     # https://stackoverflow.com/questions/15705630/get-the-rows-which-have-the-max-count-in-groups-using-groupby
     # sort by exon number value - last exon = top of sort
     # drop_duplicates keeps top row for each transcript_id - removes all rows but last exon
-    df = df.sort_values('exon_number', ascending=False).drop_duplicates(['transcript_id'])
+    #df = df.sort_values('exon_number', ascending=False).drop_duplicates(['transcript_id'])
 
     return pyr.PyRanges(df)
 
