@@ -297,7 +297,7 @@ def alt_get_last_exons(pyranges):
     pyranges = pyranges.as_df()
     pyranges = pyranges[pyranges.Feature == 'exon']
 
-    # set exon_number dtype to int32 (integer)
+    # set exon_number dtype to int32 (integer) (selecting max value doesn't work as intended - if >= 10 exons selects 9th)
     pyranges = pyranges.astype({'exon_number': 'int32'})
 
     # for each transcript_id, select the largest exon number as entry to retain
