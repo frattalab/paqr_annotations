@@ -90,8 +90,8 @@ Many thanks to [Ralf Schmidt](https://github.com/koljaLanger) for his helpful cl
 ## To dos
 1. How to handle transcripts with exactly the same terminal exon (carry all in annotations file (as doing now) or pick one - how to decide?)
 2. Multithreading (work out how to do some of my pandas functions without converting to DFs and back)
-..* pip install -U ray (add to env.yaml - package for Multithreading support)
-3. Option to exclude overlaps with other genes regardless of strand
-4. replace sys.argv with argparse (lazy...)
-5. Add specific details on how new release compares to old polyAsite release, how well my annotations overlap with provided annotations, drop off with TSL filters etc.
-6. Add log files to catch prints from rules (only get_clusters_BED rule to-do now)(add more verbose explanations about steps selected, how many genes/transcripts lost to filters etc.)
+  - pip install -U ray (add to env.yaml - package for Multithreading support)
+3. replace sys.argv with argparse (lazy...)
+4. Add specific details on how new release compares to old polyAsite release, how well my annotations overlap with provided annotations, drop off with TSL filters etc.
+5. Add log files to catch prints from rules (only get_clusters_BED rule to-do now)(add more verbose explanations about steps selected, how many genes/transcripts lost to filters etc.)
+6. Submission scripts for SGE cluster
