@@ -80,8 +80,8 @@ def add_paqr_long_name(pyranges=None, col_name='paqr_long_name'):
     '''
     pyranges = pyranges.as_df()
 
-    def f(x): return ':'.join([x['transcript_id'], x['exon_number'],
-                               x['exon_number'], str(x['Start_b']), str(x['End_b'])])
+    def f(x): return ':'.join([x['transcript_id'], str(x['exon_number']),
+                               str(x['exon_number']), str(x['Start_b']), str(x['End_b'])])
     pyranges[col_name] = pyranges.apply(f, axis=1)
 
     return pyr.PyRanges(pyranges)
