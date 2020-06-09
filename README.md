@@ -13,7 +13,7 @@ Per recommendations in [following issue](https://github.com/zavolanlab/PAQR_KAPA
 
 This workflow satisfies these criteria by performing the following steps:
  - Filter for transcripts that have a *gene_type* tag of 'protein_coding' or 'lncRNA'
- - *'strand-aware'* overlap of terminal exon coordinates with all coordinates of all **gene** Features in input GTF. Terminal exons that overlap with coordinates of a *different gene* are excluded from further analysis.
+ - *'strand-aware'* overlap of terminal exon coordinates with all coordinates of all **gene** Features in input GTF. Terminal exons that overlap with coordinates of a *different gene* on the *same strand* are excluded from further analysis.
  - Valid terminal exons overlap with coordinates of at least two poly(A) site clusters in PolyASite BED file
 
 
@@ -23,10 +23,19 @@ I have also included additional, customisable filters for the **'transcript supp
  - Select the 'best supported isoforms' for each gene (see **config.yaml** file for a more verbose explanation)
 
 
-Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the **GENCODE mouse vM25 GTF file** (['reference chromosomes only' GTF file](https://www.gencodegenes.org/mouse/release_M25.html) i.e. first row in table of link) & **mouse PolyASite 2.0 release** BED file. I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. All transcripts have a TSL: 1, but you are able to generate files with more relaxed thresholds using this workflow if you are not happy with this.
+Under the examples directory, I have provided *'transcript'* and *'cluster'* annotation files generated using the **GENCODE mouse vM25 GTF file** (['reference chromosomes only' GTF file](https://www.gencodegenes.org/mouse/release_M25.html) i.e. first row in table of link) & **mouse PolyASite 2.0 release** BED file. I have successfully ran both steps of PAQR (GitHub as of May 2020) with these annotation files. I've provided files with no TSL filtering and a minimum TSL:1, but you are able to generate files with other thresholds using this workflow if you are not happy with these.
 
 
-As a side note, this workflow is 'backwards compatible' with the PolyASite v1.0 release (wanted to sanity check my approach). Details on how my workflow lines up with provided annotations will follow in due course...
+This workflow is 'backwards compatible' with the PolyASite v1.0 release (wanted to sanity check my approach). Running my workflow with mouse PolyASite V1.0 & GENCODE vM14 annotations reveals a good overlap with genes present in provided files.
+
+![Venn diagram comparing provided annotations & my workflow with same input](analysis/venn_provided_old_vs_my_old.png)
+(of the 288 genes in provided annotations but not my workflow - 267 do not have a 'protein_coding' or 'lncRNA' gene_type tag. All 267 would otherwise pass the workflow.)
+
+The new annotations (vM25 & PolyASite v2.0) have ~2000 more genes with multiple poly(A) sites vs provided annotations. Full plot of the effects of applying different TSL filters on the total number of genes in plot below
+
+![Line plot demonstrating impact of different TSL filters on total number of genes in annotation](analysis/fixed_annotations_gene_number_line_plot.png)
+(Note: I have not applied any TSL filtering on the provided annotations. Points at each cut-off included for visualisation purposes only
+NA = no filtering applied)
 
 ## Installation & Dependencies
 This pipeline makes use of the following packages & version numbers:
