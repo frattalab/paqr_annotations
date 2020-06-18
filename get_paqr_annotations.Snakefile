@@ -8,8 +8,9 @@ os.system("mkdir -p {0}".format(config['output_dir']))
 
 rule all:
     input:
-        os.path.join(config['output_dir'], config['transcripts_name']),
-        os.path.join(config['output_dir'], config['clusters_name'])
+        os.path.join(config['output_dir'],"config.yaml"),
+        #os.path.join(config['output_dir'], config['transcripts_name']),
+        #os.path.join(config['output_dir'], config['clusters_name'])
 
 
 rule get_non_overlap_multi_polyA_genes:
@@ -87,3 +88,16 @@ rule get_clusters_BED:
         {params.atlas_version} \
         {output.clusters_bed}
         '''
+
+rule copy_config:
+    input:
+        trs_bed = os.path.join(config['output_dir'], config['transcripts_name']),
+        clusters_bed = os.path.join(config['output_dir'], config['clusters_name'])
+
+    output:
+        os.path.join(config['output_dir'],"config.yaml")
+
+    shell:
+        '''
+        cp config.yaml {output}
+        '''	

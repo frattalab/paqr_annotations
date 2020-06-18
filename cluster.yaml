@@ -1,0 +1,22 @@
+__default__:
+    tmem: 4G
+    h_vmem: 4G
+    h_rt:   24:00:00
+    pe: smp 1
+    R:  y
+
+get_non_overlap_multi_polyA_genes:
+    tmem: 12G
+    h_vmem: 12G
+    pe: smp 2
+    R: y
+    h_rt: 24:00:00
+
+get_clusters_BED:
+    tmem: 8G
+    h_vmem: 8G
+    pe: smp 2
+    R: y
+    h_rt: 24:00:00
+
+ 
